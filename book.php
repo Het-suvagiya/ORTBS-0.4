@@ -37,6 +37,13 @@ while ($row = $closed_days_result->fetch_assoc()) {
 }
 $stmt->close();
 
+// Fetch menu items
+$stmt = $conn->prepare("SELECT * FROM restaurant_menu WHERE restaurant_id = ?");
+$stmt->bind_param("i", $rest_id);
+$stmt->execute();
+$menu_items = $stmt->get_result();
+$stmt->close();
+
 // Check if basic profile is filled
 $is_profile_complete = !empty($user['first_name'] ?? '') && !empty($user['last_name'] ?? '');
 
@@ -138,6 +145,49 @@ require_once 'header.php';
                 </p>
             <?php endif; ?>
 
+            <!-- Menu Display -->
+            <div style="margin-top: 2rem; border-top: 1px solid #e2e8f0; padding-top: 2rem;">
+                <h4 style="font-size: 1.2rem; color: #1e293b; margin-bottom: 1.5rem; font-weight: 800; display: flex; justify-content: space-between; align-items: center;">
+                    <span><i class="fas fa-book-open" style="color: #f59e0b; margin-right: 0.5rem;"></i> Restaurant Menu</span>
+                    <?php if (!empty($restaurant['menu_file'])): ?>
+                        <a href="<?php echo htmlspecialchars($restaurant['menu_file']); ?>" target="_blank" style="font-size: 0.9rem; color: #3b82f6; text-decoration: none; font-weight: 600; background: #eff6ff; padding: 0.4rem 0.8rem; border-radius: 6px;">
+                            <i class="fas fa-file-pdf"></i> View Full Menu
+                        </a>
+                    <?php endif; ?>
+                </h4>
+
+                <?php if ($menu_items->num_rows > 0): ?>
+                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                        <?php while ($item = $menu_items->fetch_assoc()): ?>
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                                <div>
+                                    <div style="font-weight: 700; color: #334155; font-size: 1.05rem; margin-bottom: 0.2rem;">
+                                        <?php echo htmlspecialchars($item['item_name']); ?>
+                                    </div>
+                                    <?php if ($item['item_discount'] > 0): ?>
+                                        <span style="font-size: 0.75rem; background: #dcfce7; color: #166534; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 700;">
+                                            <?php echo floatval($item['item_discount']); ?>% OFF
+                                        </span>
+                                    <?php endif; ?>
+                                </div>
+                                <div style="text-align: right;">
+                                    <?php if ($item['item_discount'] > 0): ?>
+                                        <div style="text-decoration: line-through; color: #94a3b8; font-size: 0.85rem;">₹<?php echo $item['item_price']; ?></div>
+                                        <div style="font-weight: 800; color: var(--primary-color); font-size: 1.1rem;">
+                                            ₹<?php echo number_format($item['item_price'] - ($item['item_price'] * ($item['item_discount']/100)), 2); ?>
+                                        </div>
+                                    <?php else: ?>
+                                        <div style="font-weight: 800; color: var(--primary-color); font-size: 1.1rem;">₹<?php echo $item['item_price']; ?></div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        <?php endwhile; ?>
+                    </div>
+                <?php else: ?>
+                    <p style="color: #94a3b8; font-style: italic; font-size: 0.95rem;">No specific menu items listed yet.</p>
+                <?php endif; ?>
+            </div>
+
             <div style="display: grid; gap: 1.2rem; padding-top: 1.5rem; border-top: 1px solid #f1f5f9;">
                 <?php if (!empty($restaurant['phone'])): ?>
                     <div style="display: flex; align-items: center; gap: 1rem; font-size: 1.1rem; color: #475569;">
@@ -166,7 +216,7 @@ require_once 'header.php';
                             <i class="fas fa-chair" style="font-size: 1.1rem;"></i>
                         </div>
                         <span style="font-weight: 500;">Seating:</span>
-                        <span style="text-transform: capitalize; font-weight: 600;"><?php echo htmlspecialchars($restaurant['seating_type']); ?></span>
+                        <span style="text-transform: capitalize; font-weight: 600;"><?php echo htmlspecialchars($restaurant['seating_type'] === 'both' ? 'Inside and Outside' : $restaurant['seating_type']); ?></span>
                     </div>
                 <?php endif; ?>
             </div>

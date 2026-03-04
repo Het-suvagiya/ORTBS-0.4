@@ -73,7 +73,8 @@ CREATE TABLE IF NOT EXISTS `restaurants` (
     `max_guests` INT DEFAULT 20,
     `status` ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
     `is_published` BOOLEAN DEFAULT FALSE,
-    `description` TEXT,
+    `description` TEXT DEFAULT NULL,
+    `menu_file` VARCHAR(255) DEFAULT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -83,19 +84,19 @@ CREATE TABLE IF NOT EXISTS `restaurant_images` (
     `image_path` VARCHAR(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS `restaurant_menu` (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    restaurant_id INT NOT NULL,
+    item_name VARCHAR(100) NOT NULL,
+    item_price DECIMAL(10,2) NOT NULL,
+    item_discount DECIMAL(5,2) DEFAULT 0.00
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE IF NOT EXISTS `restaurant_schedule` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `restaurant_id` INT NOT NULL,
     `day_of_week` ENUM('sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat') NOT NULL,
     `is_closed` BOOLEAN DEFAULT FALSE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE IF NOT EXISTS `menus` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `restaurant_id` INT NOT NULL,
-    `name` VARCHAR(100) NOT NULL,
-    `price` DECIMAL(10, 2) NOT NULL,
-    `offer` VARCHAR(50)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `bookings` (
@@ -125,7 +126,6 @@ CREATE TABLE IF NOT EXISTS `favorites` (
 ALTER TABLE `restaurants` ADD CONSTRAINT `fk_res_manager` FOREIGN KEY (`manager_id`) REFERENCES `tbl_manager`(`m_id`) ON DELETE CASCADE;
 ALTER TABLE `restaurant_images` ADD CONSTRAINT `fk_img_res` FOREIGN KEY (`restaurant_id`) REFERENCES `restaurants`(`id`) ON DELETE CASCADE;
 ALTER TABLE `restaurant_schedule` ADD CONSTRAINT `fk_sch_res` FOREIGN KEY (`restaurant_id`) REFERENCES `restaurants`(`id`) ON DELETE CASCADE;
-ALTER TABLE `menus` ADD CONSTRAINT `fk_menu_res` FOREIGN KEY (`restaurant_id`) REFERENCES `restaurants`(`id`) ON DELETE CASCADE;
 ALTER TABLE `bookings` ADD CONSTRAINT `fk_book_user` FOREIGN KEY (`user_id`) REFERENCES `tbl_users`(`u_id`) ON DELETE CASCADE;
 ALTER TABLE `bookings` ADD CONSTRAINT `fk_book_res` FOREIGN KEY (`restaurant_id`) REFERENCES `restaurants`(`id`) ON DELETE CASCADE;
 ALTER TABLE `favorites` ADD CONSTRAINT `fk_fav_user` FOREIGN KEY (`user_id`) REFERENCES `tbl_users`(`u_id`) ON DELETE CASCADE;
